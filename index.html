@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disney 2027 Dining Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: sticky filter bar over three dining lists (Sit Down, Quick Serve, Snack), each grouped by park or resort. Cards carry a shared star and note thread. */
+:root{
+  --bg:#FAF7F2; --surface:#FFFFFF; --surface-2:#F1ECE3; --ink:#1B2740; --ink-2:#55607A;
+  --line:#E2DACB; --accent:#0F6E7A; --accent-ink:#FFFFFF; --star:#D99A00; --star-bg:#FFF3D1;
+  --danger:#B3402A;
+  --font-display:"Fraunces",Georgia,"Times New Roman",serif;
+  --font-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A2B; --surface:#1A2439; --surface-2:#222E47; --ink:#EEF1F7; --ink-2:#A3AEC6;
+    --line:#2D3A57; --accent:#4FC3CF; --accent-ink:#0B1424; --star:#F2B93B; --star-bg:#3A3320;
+    --danger:#F08A73; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A2B; --surface:#1A2439; --surface-2:#222E47; --ink:#EEF1F7; --ink-2:#A3AEC6;
+  --line:#2D3A57; --accent:#4FC3CF; --accent-ink:#0B1424; --star:#F2B93B; --star-bg:#3A3320;
+  --danger:#F08A73; color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;padding-inline:16px}
+*{box-sizing:border-box}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 56px}
+header.hero{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;padding-block:8px 18px}
+.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 6px}
+h1{font-family:var(--font-display);font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0;text-wrap:balance;font-weight:700}
+.sub{margin:8px 0 0;color:var(--ink-2);max-width:60ch}
+.tally{background:var(--star-bg);border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:150px}
+.tally b{font-family:var(--font-display);font-size:30px;display:block;line-height:1;font-variant-numeric:tabular-nums}
+.tally span{font-size:13px;color:var(--ink-2)}
+.banner{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-block:0 14px;font-size:14px;color:var(--ink-2)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab small{opacity:.8;font-weight:600;margin-left:4px;font-variant-numeric:tabular-nums}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters input[type=search],.filters select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;flex:1 1 180px}
+.check{display:flex;gap:6px;align-items:center;font-size:15px;white-space:nowrap}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.group[hidden]{display:none}
+section.loc{padding-top:26px}
+section.loc h2{font-family:var(--font-display);font-size:22px;margin:0 0 12px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section.loc h2 span{font-family:var(--font-body);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.picked{border-color:var(--star);box-shadow:0 0 0 1px var(--star) inset}
+.card h3{margin:0;font-size:18px;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+.meta{font-size:14px;color:var(--ink-2);display:flex;gap:8px;flex-wrap:wrap}
+.price{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.desc{margin:0;font-size:15px}
+.new{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;align-self:flex-start}
+.ratings{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;gap:6px;align-items:baseline;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--ink)}
+.chip .k{color:var(--ink-2);font-weight:600}
+.chip .v{font-weight:700;font-variant-numeric:tabular-nums}
+.chip.hi{border-color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.btn{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.star[aria-pressed="true"]{background:var(--star-bg);border-color:var(--star);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.who{font-size:13px;color:var(--ink-2);margin:0}
+.notes{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:8px}
+.notes[hidden]{display:none}
+.note{background:var(--surface-2);border-radius:8px;padding:8px 10px;font-size:14px;overflow-wrap:anywhere}
+.note .by{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px;margin-bottom:2px}
+.note .x{background:none;border:0;color:var(--danger);font:inherit;font-size:12px;cursor:pointer;padding:0}
+.notes textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;min-height:62px;resize:vertical}
+.empty{padding:40px 0;text-align:center;color:var(--ink-2)}
+footer{margin-top:40px;font-size:13px;color:var(--ink-2);max-width:70ch}
+@media print{
+  body{background:#fff;color:#000}
+  .bar,.actions .btn,.notes textarea,.notes .row,.banner{display:none!important}
+  .group[hidden]{display:block!important}
+  .notes[hidden]{display:flex!important}
+  .card{break-inside:avoid;box-shadow:none}
+  .group::before{content:attr(data-title);display:block;font-family:var(--font-display);font-size:26px;margin-top:24px}
+}
+
+.signin{max-width:560px;margin:16px auto;padding:18px;border:1px solid var(--line);border-radius:14px}
+.signin h2{margin:0 0 6px;font-family:Fraunces,serif}
+.signin form{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.signin input{flex:1 1 180px;padding:12px;font:inherit;border:1px solid #999;border-radius:10px}
+.signin button{padding:12px 18px;font:inherit;font-weight:700;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.signin .err{color:#b00020;margin-top:8px;min-height:1em}
+.whobar{max-width:1100px;margin:8px auto;padding:0 16px;font-size:.9rem}
+.whobar button{background:none;border:0;text-decoration:underline;cursor:pointer;font:inherit;color:inherit}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Walt Disney World · May 2027</p>
+      <h1>Where we want to eat</h1>
+      <p class="sub">Every park and resort restaurant, sorted by Sit Down, Quick Serve and Snack. Star the places you want and leave a note on any of them. Disney Springs is not included.</p>
+    </div>
+    <div class="tally" aria-live="polite"><b id="tallyN">0</b><span>places on our short list</span></div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+  <section id="signin" class="signin" hidden>
+    <h2>Join the family board</h2>
+    <p>Enter your first name and the family password to star places and add notes. Everyone sees each other's picks.</p>
+    <form id="loginForm">
+      <input id="loginName" type="text" placeholder="Your first name" maxlength="30" autocomplete="given-name" required>
+      <input id="loginPw" type="password" placeholder="Family password" autocomplete="current-password" required>
+      <button type="submit">Sign in</button>
+    </form>
+    <div id="loginErr" class="err" role="alert"></div>
+  </section>
+  <div id="who" class="whobar" hidden>Signed in as <b id="whoName"></b> &middot; <button id="signout" type="button">Sign out</button></div>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Search by name, cuisine or dish" aria-label="Search restaurants">
+      <select id="loc" aria-label="Park or resort"></select>
+      <select id="sort" aria-label="Sort"><option value="default">Sort: by park or resort</option><option value="ta">Sort: TripAdvisor rating</option><option value="picks">Sort: most recommended</option></select>
+      <label class="check"><input id="onlyStar" type="checkbox"> Starred only</label>
+    </div>
+  </div>
+
+  <div id="lists"></div>
+  <div id="none" class="empty" hidden>Nothing matches. Try a different park, resort or search.</div>
+
+  <footer>
+    <p><b>What is included.</b> Every sit down restaurant, quick service spot, snack stand, coffee kiosk, lounge and pool bar I could find at the four theme parks and the Disney resort hotels, plus the Swan, Dolphin and Swan Reserve. I compared the list against Disney Food Blog, WDWInfo, the Disney Dining Plan lists and Disney Tourist Blog's open and closed report. Small carts are grouped into one "snack carts" card per park. Disney Springs and the water parks are left out as you asked, along with ESPN Wide World of Sports, Shades of Green and the Four Seasons.</p>
+    <p><b>Left off because they are closed or not operating:</b> Tomorrowland Terrace and Tortuga Tavern (Magic Kingdom, seasonal and not running recently), Restaurant Marrakesh (EPCOT, closed long term), and the permanently closed Mama Melrose's, PizzeRizzo, Restaurantosaurus, Aunt Polly's, ESPN Club, Jellyrolls and Spirit of Aloha.</p>
+    <p><b>Where the ratings come from.</b> TripAdvisor bubble ratings (out of 5, with review counts), AllEars reader scores, TouringPlans reader surveys and the 2026 Michelin Guide appear on the cards. "Picked by" counts how many of 14 recent best-of lists named the place: Disney Food Blog, Theme Park Shark, Chart the Magic, Practically Perfect Pixie Dust, Disney Tourist Blog (two lists), Mouse Hacking, The Points Guy, Fodor's, Ziggy Knows Disney, DisneyBlog, Eat Sleep Disney, Mickey Visit's Yelp roundup and TouringPlans readers. Many small stands have no rating because the sites did not cover them.</p>
+    <p>Price signs are rough guides ($ under about $15 a person, $$$$ is a splurge). Menus, hours and what is open change often, and a few places are brand new or still to open, so confirm details and reservations on Disney's site or in My Disney Experience before we book.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+var TYPES=[["S","Sit Down"],["Q","Quick Serve"],["N","Snack"]];
+var LOCS=[
+ ["MK","Magic Kingdom","Park"],["EP","EPCOT","Park"],["HS","Hollywood Studios","Park"],["AK","Animal Kingdom","Park"],
+ ["AKL","Animal Kingdom Lodge","Resort"],["CON","Contemporary","Resort"],["GF","Grand Floridian","Resort"],["POLY","Polynesian Village","Resort"],
+ ["WL","Wilderness Lodge","Resort"],["FW","Fort Wilderness","Resort"],["BW","BoardWalk","Resort"],["YBC","Yacht & Beach Club","Resort"],
+ ["RIV","Riviera","Resort"],["CB","Caribbean Beach","Resort"],["CS","Coronado Springs","Resort"],["POR","Port Orleans Riverside","Resort"],
+ ["POFQ","Port Orleans French Quarter","Resort"],["SSR","Saratoga Springs","Resort"],["OKW","Old Key West","Resort"],
+ ["AOA","Art of Animation","Resort"],["POP","Pop Century","Resort"],["ASR","All-Star Resorts","Resort"],
+ ["LL","Lakeshore Lodge","Resort"],["SD","Swan, Dolphin & Swan Reserve","Partner resort"]
+];
+/* type|loc|name|cuisine|price|detail  (a leading ! on the detail marks new or upcoming) */
+var RAW=[
+"S|MK|Cinderella's Royal Table|American, character dining|$$$$|Dine inside the castle with the princesses. Reservations go fast.",
+"S|MK|Be Our Guest Restaurant|French-inspired|$$$|Eat in the Beast's castle ballroom. Dinner has been a set menu, so check what is offered.",
+"S|MK|The Crystal Palace|Buffet, character dining|$$$|Winnie the Pooh and friends stop by the tables at this big buffet.",
+"S|MK|Jungle Navigation Co. Ltd. Skipper Canteen|Pan-Asian, African, Latin|$$|Themed dining rooms and a funny skipper show. Good flavor, easy to share.",
+"S|MK|Liberty Tree Tavern|American, family style|$$|Roast turkey, stuffing and trimmings served to the table in Liberty Square.",
+"S|MK|The Plaza Restaurant|Sandwiches, burgers, sundaes|$$|Classic Main Street diner with big ice cream sundaes.",
+"S|MK|Tony's Town Square Restaurant|Italian|$$|Pasta and pizza in the Lady and the Tramp dining room on Main Street.",
+"S|MK|Diamond Horseshoe|Lounge, small plates|$$|!Opens October 2026 with corn fritters, sticky ribs and trivia. Adults only after 9 PM. Confirm it is still running in May.",
+"Q|MK|Casey's Corner|Hot dogs|$|Ballpark hot dogs and loaded fries on Main Street.",
+"Q|MK|Columbia Harbour House|Seafood, sandwiches|$|Lobster rolls and chicken. The upstairs seating is usually quiet.",
+"Q|MK|Pecos Bill Tall Tale Inn and Cafe|Tex-Mex|$|Burritos, bowls and a big toppings bar.",
+"Q|MK|Pinocchio Village Haus|Flatbread, burgers|$|Easy kid-friendly lunch with a view of the It's a small world area.",
+"Q|MK|Gaston's Tavern|Pastries|$|Giant cinnamon roll and LeFou's Brew frozen apple drink.",
+"Q|MK|The Friar's Nook|Mac and cheese, tots|$|Loaded tots and mac and cheese in Fantasyland.",
+"Q|MK|Cosmic Ray's Starlight Cafe|Burgers, chicken|$|One of the biggest quick service spots, with a toppings bar.",
+"Q|MK|Sleepy Hollow Refreshments|Waffle sandwiches|$|Chicken waffle sandwiches and funnel cake snacks.",
+"Q|MK|Golden Oak Outpost|Chicken nuggets|$|Fast nuggets and fries in Frontierland.",
+"Q|MK|Main Street Bakery (Starbucks)|Coffee, pastries|$|Coffee and breakfast pastries as you walk in.",
+"N|MK|Aloha Isle|Frozen pineapple treats|$|Dole Whip in a cup or float.",
+"N|MK|Sunshine Tree Terrace|Citrus swirl|$|Orange and vanilla soft serve in Adventureland.",
+"N|MK|Plaza Ice Cream Parlor|Ice cream|$|Old-fashioned scoops on Main Street.",
+"N|MK|Main Street Confectionery|Candy, sweets|$|Fudge, candy apples and chocolates.",
+"N|MK|Storybook Treats|Soft serve|$|Little Mermaid themed soft serve in Fantasyland.",
+"N|MK|Auntie Gravity's Galactic Goodies|Frozen treats|$|Tomorrowland swirl and fruit treats.",
+"S|EP|Le Cellier Steakhouse|Steakhouse, Canadian|$$$$|Filet and a famous cheddar soup. One of the toughest reservations at EPCOT.",
+"S|EP|Akershus Royal Banquet Hall|Norwegian, princess dining|$$$|Princesses visit the tables inside the Norway castle.",
+"S|EP|Garden Grill Restaurant|American, character dining|$$$|Family-style meal on a slowly turning floor above The Land boat ride.",
+"S|EP|Coral Reef Restaurant|Seafood|$$$|Sit next to a giant aquarium. Reopened September 2026 for dinner service.",
+"S|EP|Biergarten Restaurant|German buffet|$$$|Buffet, live music and a Bavarian village setting.",
+"S|EP|Chefs de France|French|$$$|Bistro classics in the France pavilion.",
+"S|EP|Via Napoli Ristorante e Pizzeria|Italian pizza|$$|Wood-fired pizza made to share.",
+"S|EP|Tutto Italia Ristorante|Italian|$$$|Upscale Italian with pasta and seafood.",
+"S|EP|Teppan Edo|Japanese hibachi|$$$|Chefs cook at your table in the Japan pavilion.",
+"S|EP|Shiki-Sai Sushi Izakaya|Japanese, sushi|$$|Sushi and small plates, tucked into the Japan pavilion.",
+"S|EP|Nine Dragons Restaurant|Chinese|$$|Family-style Chinese dishes in the China pavilion.",
+"S|EP|Spice Road Table|Moroccan, Mediterranean|$$|Small plates on a patio over the lagoon. Great for fireworks views.",
+"S|EP|Rose & Crown Dining Room|British pub|$$|Fish and chips, pies and a lagoon patio.",
+"S|EP|San Angel Inn Restaurante|Mexican|$$|Dine indoors by the Gran Fiesta Tour boat ride in a starry night setting.",
+"S|EP|La Hacienda de San Angel|Mexican|$$|Mexican dishes with a lagoon view.",
+"S|EP|Restaurant La Crêperie de Paris|French crepes|$$|Sweet and savory crepes in the France pavilion.",
+"Q|EP|Connections Eatery|American|$|Several kitchens in one at the center of the park.",
+"Q|EP|Connections Café|Coffee, pastries|$|Coffee, pastries and light bites next to Connections Eatery.",
+"N|EP|Oasis Sweets & Sips|Sweets, drinks|$|Treats and drinks in the Oasis area near the park entrance.",
+"Q|EP|Sunshine Seasons|Fresh bowls, grill|$|Quick service in The Land with many choices.",
+"Q|EP|Regal Eagle Smokehouse|BBQ|$|Smoked brisket and ribs in the American Adventure.",
+"Q|EP|Fife & Drum Tavern|Turkey legs, snacks|$|Giant turkey legs and cold drinks.",
+"Q|EP|Yorkshire County Fish Shop|Fish and chips|$|Crispy fish and chips in the UK.",
+"Q|EP|Katsura Grill|Japanese|$|Sushi, noodles and rice bowls with garden seating.",
+"Q|EP|Sommerfest|Bratwurst, pretzels|$|Sausages and strudel in Germany.",
+"Q|EP|Pizza al Taglio|Pizza by the slice|$|Quick Italian slices in the Italy pavilion.",
+"Q|EP|Les Halles Boulangerie-Patisserie|French bakery|$|Sandwiches, quiche and pastries.",
+"Q|EP|Lotus Blossom Cafe|Chinese|$|Quick service Chinese bowls and sweet treats.",
+"Q|EP|La Cantina de San Angel|Mexican|$|Tacos and nachos by the lagoon.",
+"N|EP|Kringla Bakeri Og Cafe|Norwegian bakery|$|School bread, a custard-filled pastry loved by many guests.",
+"N|EP|L'Artisan des Glaces|French ice cream|$|Ice cream and sorbet in the France pavilion.",
+"N|EP|Karamell-Kuche|Candy, caramel|$|Fresh caramel corn and candy in Germany.",
+"N|EP|Joy of Tea|Tea, drinks|$|Bubble tea and iced teas in China.",
+"N|EP|Kabuki Cafe|Shaved ice|$|Cold shaved ice in the Japan pavilion.",
+"S|HS|The Hollywood Brown Derby|American, Californian|$$$|Famous for the Cobb salad. A calm sit down meal in the park.",
+"S|HS|50's Prime Time Cafe|American comfort food|$$|Meat loaf and pot roast served by a staff acting like family.",
+"S|HS|Sci-Fi Dine-In Theater Restaurant|American|$$|Eat in a car at a drive-in movie theater. Fun for the kids.",
+"S|HS|Roundup Rodeo BBQ|BBQ|$$|Toy Story Land all-you-care-to-enjoy barbecue with a western feel.",
+"S|HS|Hollywood & Vine (Minnie's Seasonal Dine)|Buffet, character dining|$$$|Characters at the table. Offerings change by season.",
+"S|HS|The Hollywood Brown Derby Lounge|Lounge, small plates|$$$|Cocktails and bites in an elegant setting.",
+"S|HS|Harryhausen's|Japanese, sushi|$$$|!Monsters, Inc. themed restaurant opening in 2027. Opening date not set, so ask before we plan on it.",
+"Q|HS|Docking Bay 7 Food and Cargo|Galactic fare|$$|Galaxy's Edge meals served in a smuggler's hangar.",
+"Q|HS|Ronto Roasters|Wraps, sausages|$$|Roasted meat wrap with a popular morning option too.",
+"Q|HS|Backlot Express|Burgers, chicken|$|Large menu near Star Wars Launch Bay.",
+"Q|HS|Catalina Eddie's|Pizza|$|Slices and salads at a roomy counter.",
+"Q|HS|Woody's Lunch Box|American comfort|$|Tater tots and Toy Story Land fare.",
+"Q|HS|ABC Commissary|Mixed menu|$|Chicken, burgers and bowls with indoor seating.",
+"Q|HS|Dockside Diner|Quick bites|$|Snacks and sandwiches on the Echo Lake side.",
+"Q|HS|Rosie's All-American Cafe|Burgers|$|Counter service burgers and hot dogs.",
+"Q|HS|Fairfax Fare|Quick bites|$|Hot dogs, chicken and fries by Sunset Blvd.",
+"Q|HS|Archie's Scare Pig Pizza|Pizza|$|!Monsters, Inc. themed quick service opening in 2027. Date not set.",
+"N|HS|Kat Saka's Kettle|Popcorn|$|Galaxy's Edge flavored popcorn.",
+"N|HS|Milk Stand|Blue and green milk|$|Star Wars frozen milk, blue or green.",
+"N|HS|Dinosaur Gertie's Ice Cream of Extinction|Ice cream|$|Ice cream in a giant dinosaur.",
+"N|HS|Hollywood Scoops|Ice cream|$|Scoops and sundaes on Hollywood Blvd.",
+"N|HS|Peevy's Polar Pipeline|Frozen treats|$|Cold treats near Toy Story Land.",
+"N|HS|Pretzel Palooza|Soft pretzels|$|Warm pretzels near the park entrance.",
+"S|AK|Tiffins Restaurant|Global, signature dining|$$$$|One of the top Disney meals, with African, Asian and Latin flavors.",
+"S|AK|Tusker House Restaurant|Buffet, character dining|$$$|Donald, Daisy and friends at an African-inspired buffet.",
+"S|AK|Yak & Yeti Restaurant|Pan-Asian|$$|Sit down in a Himalayan-themed building with Asian dishes.",
+"S|AK|Rainforest Cafe|American|$$|Jungle theme with animatronics and big portions.",
+"S|AK|Nomad Lounge|Lounge, small plates|$$|Relaxed bar with global flavors and a nice view.",
+"Q|AK|Satu'li Canteen|Bowls|$$|Pandora grain bowls with chicken, beef or vegetarian options.",
+"Q|AK|Flame Tree Barbecue|BBQ|$|Ribs and chicken with waterside seating.",
+"Q|AK|Harambe Market|African grill|$|Skewers and rice plates, a good value.",
+"Q|AK|Pizzafari|Pizza, sandwiches|$|Large dining area with pizza and sandwiches.",
+"Q|AK|Yak & Yeti Local Food Cafes|Asian quick service|$|Egg rolls, noodles and more.",
+"Q|AK|Creature Comforts (Starbucks)|Coffee, pastries|$|Starbucks with Animal Kingdom specialties.",
+"N|AK|Kusafiri Bakery and Coffee Shop|Bakery|$|Pastries and flatbreads.",
+"N|AK|Zuri's Sweets Shop|Sweets|$|Cookies, drinks and desserts.",
+"N|AK|Tamu Tamu Refreshments|Ice cream, Dole Whip|$|Dole Whip and ice cream.",
+"N|AK|Pongu Pongu|Pandora drinks|$|Glowing frozen drinks with popping boba.",
+"N|AK|Isle of Java|Coffee|$|Coffee and pastries.",
+"S|AKL|Jiko - The Cooking Place|African-inspired, signature|$$$$|Wine-focused dining with some of the best views at the Lodge.",
+"S|AKL|Boma - Flavors of Africa|Buffet|$$$|Large buffet with African flavors and a family-friendly mood.",
+"S|AKL|Sanaa|African, Indian|$$$|Dine beside the savanna. Great bread service.",
+"S|AKL|Victoria Falls Lounge|Lounge|$$|Quiet drinks with a view of the animals.",
+"Q|AKL|The Mara|Quick service|$|Quick lunches and breakfast counter service.",
+"S|CON|Chef Mickey's|Buffet, character dining|$$$|Mickey and friends at the monorail resort buffet.",
+"S|CON|Steakhouse 71|Steakhouse|$$$|Upscale steaks and burgers at the Contemporary.",
+"Q|CON|Contempo Cafe|Quick service|$|Fast breakfast and lunch off the monorail.",
+"S|GF|Victoria & Albert's|Fine dining|$$$$|A top-tier Disney tasting menu experience. Dress up for it.",
+"S|GF|Cítricos|Mediterranean, Floridian|$$$$|Elegant dinner with a fireworks-view tradition.",
+"S|GF|Narcoossee's|Seafood|$$$$|Waterfront seafood with a view of the Seven Seas Lagoon.",
+"S|GF|1900 Park Fare|Buffet, character dining|$$$|Character dining with Mary Poppins and friends.",
+"S|GF|Grand Floridian Cafe|American|$$|All-day sit down at a relaxed pace.",
+"S|GF|Enchanted Rose Lounge|Lounge|$$$|Beauty and the Beast themed lounge with cocktails.",
+"S|GF|Garden View Lounge|Afternoon tea|$$$|Afternoon tea service in the lobby area.",
+"Q|GF|Gasparilla Island Grill|Quick service|$|Casual meals open late.",
+"S|POLY|'Ohana|Polynesian family style|$$$|Skewers, noodles and dessert served at the table with live entertainment.",
+"S|POLY|Kona Cafe|Pacific Rim, coffee|$$|Tonga Toast is a Disney breakfast classic.",
+"S|POLY|Wailulu Bar & Grill|Polynesian|$$|Island flavors for lunch and dinner.",
+"S|POLY|Trader Sam's Grog Grotto|Tiki lounge|$$|Over-the-top tiki drinks and bites.",
+"Q|POLY|Capt. Cook's|Quick service|$|Pineapple Dole Whip and quick meals.",
+"S|WL|Whispering Canyon Cafe|Western, family style|$$|Loud and fun with all-you-care-to-enjoy skillets.",
+"S|WL|Story Book Dining at Artist Point with Snow White|American, character dining|$$$|Snow White and friends at a Pacific Northwest style restaurant.",
+"S|WL|Territory Lounge|Lounge|$$|Quiet drinks in a lodge setting.",
+"S|WL|Geyser Point Bar & Grill|Lakeside bar and grill|$$|Bison burger and lake views at Wilderness Lodge, great for a casual dinner.",
+"Q|WL|Roaring Fork|Quick service|$|Fast breakfast and lunch counter.",
+"S|FW|Hoop-Dee-Doo Musical Revue|Dinner show|$$$|Family-friendly dinner show with fried chicken and ribs. A long-running Disney tradition.",
+"S|FW|Trail's End Restaurant|Buffet|$$|Casual campground buffet and a good value.",
+"S|FW|Crockett's Tavern|Lounge, Western|$$|Casual drinks and bites.",
+"Q|FW|The Chuck Wagon|Quick service|$|Snacks and quick service at the campground.",
+"S|BW|Flying Fish|Seafood|$$$$|A refined seafood dinner on the BoardWalk.",
+"S|BW|Trattoria al Forno|Italian|$$|Italian dishes and a good breakfast.",
+"S|BW|Hurly-Burly|American, pub|$$|!New in October 2026 with sliders, trivia and live music. After 9 PM it is adults only.",
+"Q|BW|BoardWalk Deli|Quick service|$|Sandwiches and bakery items.",
+"N|BW|BoardWalk Ice Cream|Ice cream|$|Ice cream on the promenade.",
+"S|YBC|Yachtsman Steakhouse|Steakhouse|$$$$|A top Disney steakhouse near EPCOT.",
+"S|YBC|Ale & Compass Restaurant|American, New England|$$|Seafood and burgers by the lake.",
+"S|YBC|Cape May Cafe|Seafood buffet|$$$|Clambake-style seafood buffet.",
+"S|YBC|Beaches & Cream Soda Shop|Burgers, sundaes|$$|Ice cream sundaes in a retro soda shop. The Kitchen Sink is famous.",
+"S|YBC|Crew's Cup Lounge|Lounge|$$|Nautical lounge with a casual menu.",
+"Q|YBC|Beach Club Marketplace|Quick service|$|Breakfast and grab-and-go meals.",
+"Q|YBC|Hurricane Hanna's|Pool grill|$|Poolside burgers and sandwiches.",
+"S|RIV|Topolino's Terrace|Italian, character dining|$$$|Rooftop dining with Mickey and friends at breakfast.",
+"Q|RIV|Primo Piatto|Quick service|$|Pizza, pasta and sandwiches.",
+"Q|RIV|Le Petit Cafe|Cafe|$|Coffee, pastries and sweets.",
+"S|CB|Sebastian's Bistro|Caribbean|$$|Caribbean dishes in a colorful setting.",
+"Q|CB|Spyglass Grill|Quick service|$|Pool-area counter service.",
+"Q|CB|Centertown Market|Food court|$|Quick breakfast and lunch.",
+"S|CS|Toledo - Tapas, Steak & Seafood|Spanish|$$$|Dine on the 15th floor with sweeping views.",
+"S|CS|Maya Grill|Latin American|$$|Latin dishes in the Mexican-inspired resort.",
+"S|CS|Three Bridges Bar and Grill|Southwestern|$$|Casual dining by the lake.",
+"S|CS|Rix Sports Bar & Grill|Sports bar|$$|Games and bar food.",
+"Q|CS|Cafe Rix|Quick service|$|Quick breakfast and lunch.",
+"Q|CS|Siestas Cantina|Pool bar|$|Poolside tacos and drinks.",
+"S|POR|Boatwright's Dining Hall|Cajun, Southern|$$|Cajun and Southern dishes in a relaxed setting.",
+"Q|POR|Riverside Mill Food Court|Food court|$|Quick breakfast and lunch.",
+"Q|POFQ|Sassagoula Floatworks and Food Factory|Food court|$|Beignets and Cajun food court.",
+"S|POFQ|Scat Cat's Club|Cafe and lounge|$|!Closed for refurbishment. The cafe is expected back around December 2026 and the lounge around January 2027.",
+"S|SSR|The Turf Club Bar and Grill|American|$$|Reopened September 2026 with a limited schedule (Wednesday to Sunday). Confirm days.",
+"Q|SSR|The Artist's Palette|Quick service|$|Market and quick food court.",
+"Q|SSR|The Paddock Grill|Quick service|$|Casual burgers and sandwiches.",
+"S|OKW|Olivia's Cafe|Southern, Floridian|$$|Key West flavors. Breakfast and lunch now run separately.",
+"Q|OKW|Good's Food to Go|Quick service|$|Counter service and groceries.",
+"Q|AOA|Landscape of Flavors|Food court|$|Large food court with many choices.",
+"Q|POP|Everything POP Shopping & Dining|Food court|$|Quick meals and a market.",
+"Q|ASR|All-Star Food Courts (Movies, Music, Sports)|Food courts|$|Three quick service food courts, one at each All-Star resort.",
+"S|EP|Takumi-Tei|Japanese, omakase|$$$$|Refined multi-course Japanese dining in the Japan pavilion. Check the current menu and availability.",
+"S|EP|Monsieur Paul|French, fine dining|$$$$|Prix fixe French dinner above Chefs de France. A special-occasion meal.",
+"S|EP|Space 220 Restaurant|American, prix fixe|$$$$|Dine on a space station with a view of Earth. Prix fixe menu that divides reviewers on value.",
+"S|EP|La Cava del Tequila|Tequila lounge|$$|Mexico pavilion tequila bar with small bites.",
+"S|CON|California Grill|Pacific Coast, sushi|$$$$|15th floor with Magic Kingdom fireworks views. The Contemporary refurbishment runs into 2027, so confirm it is open in May.",
+"S|CON|Top of the World Lounge|Lounge|$$$|Rooftop lounge at the Contemporary. Confirm status during the refurbishment.",
+"S|BW|The Cake Bake Shop|Bakery, cafe|$$|Layer cakes and brunch dishes inside the BoardWalk Inn.",
+"S|MK|Beak & Barrel|Pirate lounge|$$|Pirates of the Caribbean themed bar with cocktails and bites.",
+"S|HS|Oga's Cantina|Star Wars bar|$$|Galaxy's Edge cantina with themed drinks. Reservations recommended.",
+"Q|POLY|Kona Island|Coffee, sushi|$|Coffee and sushi counter at the Polynesian.",
+"Q|EP|Tangierine Cafe|Moroccan|$|Shawarma and Moroccan plates in the Morocco pavilion.",
+"N|MK|Cool Ship|Frozen treats|$|Tomorrowland ice cream and cold drinks.",
+"N|MK|Energy Bytes|Snacks, drinks|$|Tomorrowland grab-and-go snacks and drinks.",
+"N|MK|AstroFizz|Drinks|$|Tomorrowland fountain drinks and slushes.",
+"N|MK|The Lunching Pad|Snacks|$|Tomorrowland pretzels and quick snacks.",
+"N|MK|Joffrey's Revive|Coffee, tea|$|Joffrey's coffee kiosk in Tomorrowland.",
+"N|MK|Big Top Treats|Sweets, snacks|$|Storybook Circus snacks and treats.",
+"N|MK|Cheshire Cafe|Snacks, drinks|$|Fantasyland drinks and snacks, including the Cheshire Cat tail pastry.",
+"N|MK|Prince Eric's Village Market|Snacks, fruit|$|Fantasyland fruit, snacks and drinks.",
+"N|MK|Liberty Square Market|Fresh fruit, snacks|$|Fresh fruit and snack stand in Liberty Square.",
+"N|MK|Westward Ho|Snacks, drinks|$|Frontierland snack and drink stand.",
+"N|MK|Adventureland Egg Roll Wagon|Egg rolls|$|Walk-up egg rolls near the Jungle Cruise.",
+"N|MK|Park snack carts|Popcorn, pretzels, churros|$|Carts around the park for popcorn, pretzels, churros, hot dogs and cold drinks.",
+"S|EP|Tutto Gusto Wine Cellar|Italian wine bar|$$|Wine and small plates in the Italy pavilion.",
+"S|EP|Space 220 Lounge|Lounge|$$$|Space-themed cocktails and bites, with a view of the Earth.",
+"S|EP|GEO-82 Spaceship Earth Lounge|Lounge|$$|Lounge inside the Spaceship Earth area.",
+"Q|EP|La Poutinerie|Canadian poutine|$|Poutine and fries in the Canada pavilion.",
+"Q|EP|Refreshment Outpost|Hot dogs, chicken|$|Quick bites between China and Germany.",
+"N|EP|Crêpes À Emporter|Crepes|$|Walk-up sweet and savory crepes at France.",
+"N|EP|Gelateria Toscana|Gelato|$|Italian gelato in the Italy pavilion.",
+"N|EP|Choza de Margarita|Margaritas|$$|Margaritas and snacks at Mexico.",
+"N|EP|Block & Hans|Craft beer, cocktails|$$|Craft drinks at the American Adventure.",
+"N|EP|Funnel Cakes|Funnel cake|$|Funnel cakes at World Showcase.",
+"N|EP|Les Vins des Chefs de France|Wine|$$|Wine tasting counter in France.",
+"N|EP|Rose & Crown Pub|Beer, pub drinks|$$|Pub counter and beer cart at the UK pavilion.",
+"N|EP|Japan Outdoor Sake Bar|Sake, drinks|$$|Outdoor sake and drinks in the Japan pavilion.",
+"N|EP|Club Cool|Soda from around the world|$|Free soda samples from other countries, plus sweet treats.",
+"N|EP|Cool Wash|Cold drinks|$|Cold drinks and frozen treats near Mission: SPACE.",
+"N|EP|Refreshment Station|Drinks, snacks|$|Snack and drink counter in World Nature.",
+"N|EP|The Land Cart|Snacks|$|Snack cart near The Land pavilion.",
+"N|EP|Joffrey's Coffee & Tea kiosks|Coffee, tea|$|Joffrey's coffee kiosks around EPCOT.",
+"N|EP|Park snack carts|Popcorn, pretzels|$|Popcorn and snack carts around World Celebration and World Showcase.",
+"S|HS|BaseLine Tap House|Beer, bar bites|$$|Beer bar near Hollywood Boulevard.",
+"S|HS|Tune-In Lounge|Lounge|$$|Bar and small plates beside Hollywood and Vine.",
+"Q|HS|The Trolley Car Cafe (Starbucks)|Coffee, pastries|$|Starbucks near the park entrance.",
+"N|HS|Anaheim Produce|Fruit, snacks|$|Fresh fruit and snacks on Hollywood Boulevard. Check the app for the current menu.",
+"N|HS|Epic Eats|Snacks|$|Counter-service snack stand. Check the app for the current menu.",
+"N|HS|Neighborhood Bakery|Pastries, coffee|$|Bakery in the Monsters, Inc. area. Confirm hours.",
+"N|HS|Sunshine Day Bar|Drinks|$$|Drinks in the park. Check the app for hours.",
+"N|HS|Oasis Canteen|Snacks, drinks|$|Galaxy's Edge snack and drink stand.",
+"N|HS|Ice Cold Hydraulics|Cold drinks|$|Cold drinks and frozen treats.",
+"N|HS|KRNR The Rock Station|Snacks|$|Food truck and snacks near Rock 'n' Roller Coaster.",
+"N|HS|Park snack carts|Popcorn, gelato, snacks|$|Hot and Fresh Popcorn, a gelato cart and Toy Story Land snack carts.",
+"S|AK|Dawa Bar|Bar|$$|Drinks and small bites in Africa.",
+"Q|AK|Mahindi|Counter service|$|Quick counter service in Harambe. Check the app for the current menu.",
+"N|AK|Anandapur Ice Cream Truck|Ice cream|$|Ice cream in Asia.",
+"N|AK|Caravan Road|Snacks|$|Snack stand in Asia.",
+"N|AK|Drinkwallah|Drinks|$|Cold drinks in Asia.",
+"N|AK|Eight Spoon Cafe|Snacks|$|Snack stand in Asia.",
+"N|AK|Harambe Fruit Market|Fruit|$|Fresh fruit in Harambe.",
+"N|AK|Mr. Kamal's|Snacks|$|Snack stand in Asia.",
+"N|AK|The Smiling Crocodile|Snacks, drinks|$|Snack and drink stand in Discovery Island.",
+"N|AK|Terra Treats|Sweets|$|Sweet treats on Discovery Island.",
+"N|AK|Thirsty River Bar and Trek Snacks|Drinks, snacks|$$|Bar and snacks near Pandora.",
+"N|AK|Warung Outpost|Bar, drinks|$$|Bar in Asia.",
+"N|AK|Royal Anandapur Tea Company|Tea|$|Tea in Asia.",
+"N|AK|Joffrey's Coffee & Tea kiosks|Coffee, tea|$|Joffrey's coffee kiosks around the park.",
+"N|AK|Park snack carts|Popcorn, corn, snacks|$|Corn-Ivores and carts around the park.",
+"S|AKL|Sanaa Lounge|Lounge|$$|Cocktails and small plates by the savanna.",
+"S|AKL|Cape Town Lounge and Wine Bar|Wine bar|$$$|South African wines and small plates.",
+"N|AKL|Maji and Uzima Springs Pool Bars|Pool bars|$$|Poolside drinks and snacks.",
+"N|AOA|The Drop Off Pool Bar|Pool bar|$$|Poolside drinks and snacks.",
+"N|ASR|All-Star Pool Bars|Pool bars|$$|Silver Screen Spirits, Singing Spirits and Grandstand Spirits pool bars.",
+"S|BW|AbracadaBar|Lounge|$$|Magic-themed lounge.",
+"S|BW|Belle Vue Lounge|Lounge|$$|Cocktails in a cozy sitting room.",
+"Q|BW|Blue Ribbon Corn Dogs|Corn dogs|$|Gourmet corn dogs.",
+"Q|BW|BoardWalk Pizza Window|Pizza|$|Pizza by the slice on the promenade.",
+"N|BW|Carousel Coffee|Coffee|$|Coffee and pastries.",
+"N|BW|The Cake Bake Shop Bakery|Bakery|$$|Cakes and sweets to go.",
+"N|BW|BoardWalk Joe's and Leaping Horse Libations|Drinks|$$|Margarita and pool-side bars.",
+"S|YBC|Martha's Vineyard Lounge|Lounge|$$|Wine bar at the Beach Club.",
+"S|YBC|Ale & Compass Lounge|Lounge|$$|Lounge with a casual menu.",
+"Q|YBC|The Market at Ale & Compass|Quick service|$|Breakfast and grab-and-go meals.",
+"N|CB|Banana Cabana|Pool bar|$$|Poolside drinks with a fun atmosphere.",
+"N|CB|Joffrey's Skyliner Station kiosk|Coffee|$|Joffrey's coffee at the Skyliner station.",
+"N|CON|Cove Bar and The Sand Bar|Pool bars|$$|Poolside drinks and snacks.",
+"N|CON|Contemporary Grounds|Coffee|$|Coffee and pastries.",
+"S|CON|Outer Rim|Star Wars lounge|$$$|Galaxy-themed lounge.",
+"S|CS|Barcelona Lounge|Lounge|$$|Spanish-inspired lounge.",
+"S|CS|Dahlia Lounge|Lounge|$$|Gran Destino lounge.",
+"Q|CS|El Mercado de Coronado|Food court|$|Food court with several counters.",
+"N|CS|The Laguna Bar|Pool bar|$$|Poolside drinks and snacks.",
+"Q|FW|P&J's Southern Takeout|Southern fried chicken|$|Fried chicken and sides to go.",
+"N|FW|Meadow Snack Bar|Snacks|$|Snack bar at the campground pool.",
+"S|GF|Cítricos Lounge|Lounge|$$$|Cocktails with a lagoon view.",
+"S|GF|The Perch|Lobby bar|$$$|Lobby bar for nightcaps.",
+"N|GF|Beaches Pool Bar and Courtyard Pool Bar|Pool bars|$$|Poolside drinks and snacks.",
+"S|OKW|The Gurgling Suitcase|Lounge|$$|Key West style lounge.",
+"N|OKW|Turtle Shack Poolside Snacks|Snacks|$|Poolside snacks.",
+"N|POLY|Pineapple Lanai|Frozen pineapple treats|$|Dole Whip at the Polynesian.",
+"Q|POLY|Oasis Bar and Grill|Pool bar and grill|$$|Poolside burgers and drinks.",
+"N|POLY|Barefoot Pool Bar|Pool bar|$$|Poolside drinks and snacks.",
+"S|POLY|Trader Sam's Tiki Terrace|Tiki bar|$$|Poolside tiki drinks and snacks.",
+"N|POP|Petals Pool Bar|Pool bar|$$|Poolside drinks and snacks.",
+"N|POFQ|Mardi Grogs|Pool bar|$$|Poolside drinks and snacks.",
+"S|POR|River Roost|Lounge|$$|Live music and casual bites.",
+"N|POR|Muddy Rivers|Pool bar|$$|Poolside drinks and snacks.",
+"S|RIV|Bar Riva|Lounge|$$|Italian-inspired pool bar and snacks.",
+"S|RIV|The Voyageurs Lounge|Lounge|$$|Resort lounge. Check the app for current hours.",
+"N|SSR|Backstretch and On The Rocks Pool Bars|Pool bars|$$|Poolside drinks and snacks.",
+"S|SSR|The Turf Club Lounge|Lounge|$$|Resort lounge with live-race-themed decor.",
+"N|WL|Trout Pass Pool Bar|Pool bar|$$|Poolside drinks and snacks.",
+"S|LL|Moonglade|Lounge|$$|Lounge at the newest Disney resort. Confirm it is open.",
+"Q|LL|Bay Lake Provisions|Quick service|$|Quick service at Lakeshore Lodge. Confirm it is open.",
+"S|LL|Paint Out Point Bar and Grill|Bar and grill|$$|Casual bar and grill. Confirm it is open.",
+"S|SD|Bourbon Steak by Michael Mina|Steakhouse|$$$$|Celebrity chef steakhouse at the Dolphin.",
+"S|SD|Todd English's bluezoo|Seafood|$$$$|Seafood restaurant at the Dolphin.",
+"S|SD|Shula's Steak House|Steakhouse|$$$$|Classic steakhouse at the Dolphin.",
+"S|SD|Rosa Mexicano|Mexican|$$$|Mexican restaurant at the Dolphin.",
+"S|SD|Il Mulino New York Trattoria|Italian|$$$|Italian restaurant at the Swan.",
+"S|SD|Kimonos Sushi Bar|Japanese, sushi|$$|Sushi and cocktails at the Swan.",
+"S|SD|Garden Grove|American|$$|Breakfast buffet and casual dining at the Swan.",
+"S|SD|Amare|Mediterranean|$$$|Mediterranean dining at the Swan Reserve.",
+"Q|SD|Fresh Mediterranean Market|Quick service|$|Fast bites at the Dolphin.",
+"Q|SD|Picabu|Quick service|$|Casual counter service at the Dolphin.",
+"Q|SD|Fuel|Quick service|$|Casual counter service at the Dolphin.",
+"N|SD|Java Bar and Splash Pool Bar|Coffee, pool bar|$|Coffee and poolside drinks at the Swan.",
+"S|POLY|Tambu Lounge|Lounge|$$|Tropical drinks and light bites at the Polynesian.",
+"N|BW|BoardWalk Snack Stand|Snacks|$|Grab-and-go snacks on the promenade.",
+"N|HS|FØØD by Swedish Chef|Snacks|$|Muppets-themed snack stand. Check the app for the current menu.",
+"N|HS|Market at Pixar Place|Snacks, drinks|$|Snack and drink stand in Toy Story Land area. Check the app for the current menu."
+];
+var RATINGS={"'Ohana": {"ta": 4.1, "tn": 5509, "pk": "CHM"}, "1900 Park Fare": {"ta": 4.1, "tn": 2778, "pk": "BDHM"}, "50's Prime Time Cafe": {"ta": 4.1, "tn": 3811, "ao": 8.18, "ap": 87, "pk": "FPZ"}, "ABC Commissary": {"ta": 3.7, "tn": 1081}, "Akershus Royal Banquet Hall": {"ta": 4.0, "tn": 2810, "ao": 8.02, "ap": 88, "pk": "FM"}, "Aloha Isle": {"ta": 4.6, "tn": 1412, "pk": "F"}, "Backlot Express": {"ta": 3.8, "tn": 699}, "Be Our Guest Restaurant": {"ta": 4.1, "tn": 10891, "pk": "BEFPSZ"}, "Beaches & Cream Soda Shop": {"ta": 4.3, "tn": 1627, "tp": 94, "pk": "R"}, "Beak & Barrel": {"ao": 7.6, "ap": 60}, "Biergarten Restaurant": {"ta": 4.1, "tn": 2662, "pk": "F"}, "Boatwright's Dining Hall": {"ta": 3.9, "tn": 1307, "pk": "F"}, "Boma - Flavors of Africa": {"ta": 4.4, "tn": 4205, "ao": 8.88, "ap": 96, "tp": 95, "pk": "CDFR"}, "California Grill": {"ta": 4.3, "tn": 3910, "tp": 93, "pk": "CERSZ"}, "Cape May Cafe": {"ta": 4.2, "tn": 2798, "pk": "FM"}, "Capt. Cook's": {"ta": 3.8, "tn": 778, "ao": 8.0, "ap": 91, "pk": "C"}, "Casey's Corner": {"ta": 4.0, "tn": 1624, "pk": "F"}, "Chef Mickey's": {"ta": 4.0, "tn": 5711, "pk": "EFHM"}, "Chefs de France": {"ta": 4.1, "tn": 3170, "pk": "Z"}, "Cinderella's Royal Table": {"ta": 4.2, "tn": 4480, "pk": "BDEGHMSYZ"}, "Columbia Harbour House": {"ta": 4.1, "tn": 1766, "ao": 8.58, "ap": 96, "pk": "CDS"}, "Contempo Cafe": {"ta": 3.9, "tn": 714}, "Coral Reef Restaurant": {"ta": 3.8, "tn": 3632}, "Cosmic Ray's Starlight Cafe": {"ta": 3.7, "tn": 2125}, "Cítricos": {"ta": 4.3, "tn": 1263, "mi": "Michelin recommended", "pk": "DT"}, "Docking Bay 7 Food and Cargo": {"pk": "CDS"}, "Everything POP Shopping & Dining": {"ta": 3.7, "tn": 1879}, "Fairfax Fare": {"ta": 3.9, "tn": 186}, "Flame Tree Barbecue": {"ta": 4.2, "tn": 1479, "pk": "CS"}, "Flying Fish": {"ta": 4.3, "tn": 1866, "pk": "CDT"}, "Garden Grill Restaurant": {"ta": 4.2, "tn": 2088, "ao": 8.83, "ap": 92, "tp": 95, "pk": "BMPR"}, "Garden View Lounge": {"ta": 4.4, "tn": 421}, "Gasparilla Island Grill": {"ta": 4.1, "tn": 482}, "Gaston's Tavern": {"ta": 4.2, "tn": 1094}, "Good's Food to Go": {"ta": 3.6, "tn": 107}, "Grand Floridian Cafe": {"ta": 4.2, "tn": 1699, "ao": 7.96, "ap": 86}, "Harambe Market": {"ta": 4.0, "tn": 111}, "Hollywood & Vine (Minnie's Seasonal Dine)": {"ta": 3.9, "tn": 2675, "pk": "DHM"}, "Hoop-Dee-Doo Musical Revue": {"tp": 95, "pk": "R"}, "Jiko - The Cooking Place": {"ta": 4.5, "tn": 2192, "tp": 96, "pk": "EFRTZ"}, "Jungle Navigation Co. Ltd. Skipper Canteen": {"ta": 4.0, "tn": 1206, "pk": "DFGYZ"}, "Kabuki Cafe": {"ta": 4.4, "tn": 144}, "Katsura Grill": {"ta": 3.8, "tn": 318}, "Kona Island": {"ta": 4.1, "tn": 2956}, "Kringla Bakeri Og Cafe": {"ta": 4.4, "tn": 515}, "La Cantina de San Angel": {"ta": 3.9, "tn": 1982}, "La Cava del Tequila": {"ta": 4.6, "tn": 496}, "Landscape of Flavors": {"ta": 3.8, "tn": 1255}, "Le Cellier Steakhouse": {"ta": 4.1, "tn": 3213, "ao": 7.57, "ap": 72, "pk": "CSZ"}, "Les Halles Boulangerie-Patisserie": {"ta": 4.5, "tn": 913, "pk": "CS"}, "Liberty Tree Tavern": {"ta": 4.2, "tn": 3379, "ao": 8.3, "ap": 94, "pk": "GPZ"}, "Lotus Blossom Cafe": {"ta": 3.6, "tn": 295}, "Main Street Bakery (Starbucks)": {"ta": 4.2, "tn": 593}, "Maya Grill": {"ta": 4.0, "tn": 677}, "Monsieur Paul": {"ta": 4.3, "tn": 610, "pk": "FT"}, "Narcoossee's": {"ta": 4.4, "tn": 1825}, "Nine Dragons Restaurant": {"ta": 3.9, "tn": 1350}, "Nomad Lounge": {"ao": 9.21, "ap": 97, "pk": "G"}, "Olivia's Cafe": {"ta": 4.2, "tn": 1070}, "Pecos Bill Tall Tale Inn and Cafe": {"ta": 3.8, "tn": 1617}, "Pinocchio Village Haus": {"ta": 3.7, "tn": 1381}, "Pizzafari": {"ta": 3.6, "tn": 668}, "Pongu Pongu": {"ta": 4.2, "tn": 147}, "Primo Piatto": {"pk": "C"}, "Regal Eagle Smokehouse": {"ta": 3.8, "tn": 408}, "Riverside Mill Food Court": {"ta": 3.9, "tn": 1183}, "Rix Sports Bar & Grill": {"ta": 3.8, "tn": 258}, "Roaring Fork": {"ta": 3.9, "tn": 458}, "Rose & Crown Dining Room": {"ta": 4.2, "tn": 2193, "pk": "P"}, "Roundup Rodeo BBQ": {"ao": 6.29, "ap": 43, "pk": "BGP"}, "San Angel Inn Restaurante": {"ta": 3.9, "tn": 1879}, "Sanaa": {"ta": 4.4, "tn": 2825, "ao": 8.3, "ap": 94, "tp": 95, "pk": "DPRT"}, "Sassagoula Floatworks and Food Factory": {"ta": 3.8, "tn": 997}, "Satu'li Canteen": {"ta": 4.4, "tn": 719, "ao": 8.99, "ap": 95, "pk": "CDFG"}, "Sci-Fi Dine-In Theater Restaurant": {"ta": 4.0, "tn": 4328, "pk": "DZ"}, "Sebastian's Bistro": {"pk": "BD"}, "Shiki-Sai Sushi Izakaya": {"ta": 4.1, "tn": 753, "ao": 10.0, "ap": 100}, "Sleepy Hollow Refreshments": {"ta": 4.4, "tn": 430, "pk": "Y"}, "Sommerfest": {"ta": 3.9, "tn": 199}, "Space 220 Restaurant": {"ta": 3.8, "tn": 425, "pk": "CDEGZ"}, "Spice Road Table": {"ta": 4.3, "tn": 645}, "Story Book Dining at Artist Point with Snow White": {"ta": 4.2, "tn": 1493, "tp": 93, "pk": "DEHMR"}, "Storybook Treats": {"ta": 4.5, "tn": 75}, "Sunshine Seasons": {"ta": 4.1, "tn": 852, "pk": "C"}, "Sunshine Tree Terrace": {"ta": 4.4, "tn": 145}, "Takumi-Tei": {"pk": "FGTZ"}, "Tamu Tamu Refreshments": {"ta": 4.2, "tn": 92}, "Tangierine Cafe": {"ta": 4.3, "tn": 539}, "Teppan Edo": {"ta": 4.3, "tn": 2251}, "Territory Lounge": {"ta": 4.3, "tn": 115}, "The Artist's Palette": {"ta": 3.9, "tn": 381}, "The Cake Bake Shop": {"pk": "B"}, "The Crystal Palace": {"ta": 4.0, "tn": 5345, "pk": "M"}, "The Hollywood Brown Derby": {"ta": 4.0, "tn": 2497, "ao": 7.72, "ap": 81, "pk": "GSZ"}, "The Mara": {"ta": 3.9, "tn": 951}, "The Plaza Restaurant": {"ta": 3.8, "tn": 1270}, "The Turf Club Bar and Grill": {"ta": 4.1, "tn": 409}, "Three Bridges Bar and Grill": {"pk": "D"}, "Tiffins Restaurant": {"ta": 4.3, "tn": 1059, "pk": "CDFPSTZ"}, "Toledo - Tapas, Steak & Seafood": {"mi": "Michelin recommended", "pk": "DT"}, "Tony's Town Square Restaurant": {"ta": 3.7, "tn": 2867}, "Top of the World Lounge": {"ta": 4.4, "tn": 191}, "Topolino's Terrace": {"pk": "CDFGHMPT"}, "Trader Sam's Grog Grotto": {"ao": 7.8, "ap": 80}, "Trattoria al Forno": {"ta": 4.1, "tn": 1367}, "Tusker House Restaurant": {"ta": 4.2, "tn": 3993, "pk": "BFGHM"}, "Tutto Italia Ristorante": {"ta": 4.1, "tn": 1684}, "Via Napoli Ristorante e Pizzeria": {"ta": 4.1, "tn": 3123, "pk": "CDGSZ"}, "Victoria & Albert's": {"ta": 4.8, "tn": 1624, "tp": 99, "mi": "Michelin star", "pk": "BCEFGRSTZ"}, "Victoria Falls Lounge": {"ta": 4.3, "tn": 98}, "Wailulu Bar & Grill": {"pk": "D"}, "Whispering Canyon Cafe": {"ta": 4.0, "tn": 2607, "pk": "D"}, "Woody's Lunch Box": {"ta": 3.9, "tn": 249, "pk": "C"}, "Yachtsman Steakhouse": {"ta": 4.2, "tn": 1582, "pk": "DT"}, "Yak & Yeti Restaurant": {"ta": 4.3, "tn": 3604, "tp": 93, "pk": "PRZ"}, "Yorkshire County Fish Shop": {"ta": 4.3, "tn": 634}, "Geyser Point Bar & Grill": {"ta": 4.3, "tn": 256, "pk": "D"}, "Tutto Gusto Wine Cellar": {"ta": 4.3, "tn": 316}, "Cape Town Lounge and Wine Bar": {"ta": 4.5, "tn": 113}, "River Roost": {"ta": 4.5, "tn": 228}, "Trader Sam's Tiki Terrace": {"ta": 4.3, "tn": 529}, "Banana Cabana": {"ta": 4.1, "tn": 89}, "Kimonos Sushi Bar": {"ta": 4.4, "tn": 602}, "Todd English's bluezoo": {"ta": 4.3, "tn": 1640}, "Il Mulino New York Trattoria": {"ta": 3.8, "tn": 1213}, "Garden Grove": {"ta": 3.5, "tn": 783}, "Amare": {"ta": 4.8, "tn": 286}, "El Mercado de Coronado": {"ta": 3.5, "tn": 809}, "P&J's Southern Takeout": {"ta": 4.1, "tn": 983}, "Cheshire Cafe": {"ta": 4.2, "tn": 149}, "Belle Vue Lounge": {"ta": 4.3, "tn": 92}, "Tambu Lounge": {"ta": 4.4, "tn": 106}};
+var SITES={B:'Disney Food Blog',S:'Theme Park Shark',C:'Chart the Magic',P:'Practically Perfect Pixie Dust',D:'Disney Tourist Blog (best of)',T:'Disney Tourist Blog (top table service)',M:'Mouse Hacking',G:'The Points Guy',F:"Fodor's",Z:'Ziggy Knows Disney',H:'DisneyBlog',E:'Eat Sleep Disney',Y:'Mickey Visit (Yelp ratings)',R:'TouringPlans readers'};
+function slug(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+var DATA=RAW.map(function(l){var p=l.split('|');var d=p[5];var isNew=d.charAt(0)==='!';if(isNew)d=d.slice(1);return {t:p[0],loc:p[1],name:p[2],cuisine:p[3],price:p[4],desc:d,isNew:isNew,id:slug(p[2]+'-'+p[1]),r:RATINGS[p[2]]||{}};});
+var LOCNAME={};LOCS.forEach(function(l){LOCNAME[l[0]]=l[1];});
+
+var state={type:'S',loc:'all',q:'',only:false,sort:'default',picks:{},notes:{},names:{},open:{}};
+var me={id:null,name:''},db=null,userNS=null,canWrite=true,writeBlocked=false;
+var cards={};
+
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+var $=function(id){return document.getElementById(id);};
+
+/* ---- build static page ---- */
+var tabsEl=$('tabs'),listsEl=$('lists'),locSel=$('loc');
+TYPES.forEach(function(t){
+  var n=DATA.filter(function(d){return d.t===t[0];}).length;
+  var b=el('button','tab');b.type='button';b.setAttribute('role','tab');b.dataset.t=t[0];
+  b.appendChild(document.createTextNode(t[1]));var s=el('small',null,String(n));b.appendChild(s);
+  b.addEventListener('click',function(){state.type=t[0];applyFilters();});
+  tabsEl.appendChild(b);
+});
+(function(){
+  var o=el('option',null,'All parks and resorts');o.value='all';locSel.appendChild(o);
+  [['Park','Parks'],['Resort','Resorts'],['Partner resort','Partner resorts']].forEach(function(g){
+    var og=document.createElement('optgroup');og.label=g[1];
+    LOCS.filter(function(l){return l[2]===g[0];}).forEach(function(l){var op=el('option',null,l[1]);op.value=l[0];og.appendChild(op);});
+    locSel.appendChild(og);
+  });
+})();
+
+var groups={};
+TYPES.forEach(function(t){
+  var g=el('div','group');g.dataset.t=t[0];g.dataset.title=t[1];groups[t[0]]=g;listsEl.appendChild(g);
+  LOCS.forEach(function(l){
+    var items=DATA.filter(function(d){return d.t===t[0]&&d.loc===l[0];});
+    if(!items.length)return;
+    var sec=el('section','loc');sec.dataset.loc=l[0];
+    var h=el('h2',null,l[1]);h.appendChild(el('span',null,l[2]));sec.appendChild(h);
+    var grid=el('div','grid');sec.appendChild(grid);
+    items.forEach(function(d){grid.appendChild(buildCard(d));});
+    g.appendChild(sec);
+  });
+});
+
+function ratingRow(d){
+  var r=d.r;if(!r||!Object.keys(r).length)return null;
+  var row=el('div','ratings');
+  function chip(label,val,cls,title){var s=el('span','chip'+(cls?' '+cls:''));s.appendChild(el('span','k',label));s.appendChild(el('span','v',val));if(title)s.title=title;row.appendChild(s);}
+  if(r.ta)chip('TripAdvisor',r.ta.toFixed(1)+' ('+r.tn.toLocaleString('en-US')+')',r.ta>=4.3?'hi':'','TripAdvisor bubble rating out of 5 and number of reviews');
+  if(r.ao)chip('AllEars',r.ao.toFixed(1)+'/10 · '+r.ap+'%',r.ao>=8.5?'hi':'','AllEars reader score and percent who recommend');
+  if(r.tp)chip('TouringPlans',r.tp+'% liked',r.tp>=95?'hi':'','Share of TouringPlans readers who gave it a thumbs up');
+  if(r.mi)chip('Michelin',r.mi.replace('Michelin ',''),'hi','2026 Michelin Guide');
+  if(r.pk){var n=r.pk.length;var names=r.pk.split('').map(function(c){return SITES[c];}).join(', ');chip('Picked by',n+' of 14 lists',n>=8?'hi':'','Named a top pick by: '+names);}
+  return row;
+}
+function buildCard(d){
+  var c=el('article','card');c.dataset.id=d.id;
+  if(d.isNew)c.appendChild(el('span','new','New or upcoming'));
+  c.appendChild(el('h3',null,d.name));
+  var m=el('div','meta');m.appendChild(el('span',null,d.cuisine));m.appendChild(el('span','price',d.price));c.appendChild(m);
+  c.appendChild(el('p','desc',d.desc));
+  var rr=ratingRow(d);if(rr)c.appendChild(rr);
+  var who=el('p','who');who.hidden=true;c.appendChild(who);
+  var act=el('div','actions');
+  var star=el('button','btn star','☆ Want to eat here');star.type='button';star.setAttribute('aria-pressed','false');
+  star.addEventListener('click',function(){togglePick(d.id,star);});
+  var nb=el('button','btn','Notes (0)');nb.type='button';nb.setAttribute('aria-expanded','false');
+  nb.addEventListener('click',function(){state.open[d.id]=!state.open[d.id];notesBox.hidden=!state.open[d.id];nb.setAttribute('aria-expanded',String(!!state.open[d.id]));});
+  act.appendChild(star);act.appendChild(nb);c.appendChild(act);
+  var notesBox=el('div','notes');notesBox.hidden=true;
+  var list=el('div','list');notesBox.appendChild(list);
+  var row=el('div','row');
+  var ta=document.createElement('textarea');ta.id='ta-'+d.id;ta.placeholder='Add a note: who wants it, a dish to try, a day that works';ta.setAttribute('aria-label','Note for '+d.name);
+  var add=el('button','btn primary','Add note');add.type='button';
+  add.style.marginTop='6px';
+  add.addEventListener('click',function(){addNote(d.id,ta,add);});
+  row.appendChild(ta);row.appendChild(add);notesBox.appendChild(row);
+  c.appendChild(notesBox);
+  cards[d.id]={card:c,who:who,star:star,nb:nb,notesBox:notesBox,list:list,ta:ta,add:add,d:d};
+  return c;
+}
+
+/* ---- filtering ---- */
+function matches(d,c){
+  if(d.t!==state.type)return false;
+  if(state.loc!=='all'&&d.loc!==state.loc)return false;
+  if(state.only&&!(state.picks[d.id]&&state.picks[d.id].length))return false;
+  if(state.q){var hay=(d.name+' '+d.cuisine+' '+d.desc+' '+LOCNAME[d.loc]).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
+  return true;
+}
+function applyFilters(){
+  var any=false;
+  Array.prototype.forEach.call(tabsEl.children,function(b){b.setAttribute('aria-selected',String(b.dataset.t===state.type));});
+  TYPES.forEach(function(t){groups[t[0]].hidden=t[0]!==state.type;});
+  Object.keys(cards).forEach(function(id){var o=cards[id];var ok=matches(o.d);o.card.hidden=!ok;});
+  Array.prototype.forEach.call(document.querySelectorAll('section.loc'),function(sec){
+    var vis=sec.querySelectorAll('.card:not([hidden])').length;sec.hidden=!vis;
+    if(vis&&!sec.closest('.group').hidden)any=true;
+  });
+  $('none').hidden=any;
+}
+$('q').addEventListener('input',function(e){state.q=e.target.value.trim().toLowerCase();applyFilters();});
+locSel.addEventListener('change',function(e){state.loc=e.target.value;applyFilters();});
+$('onlyStar').addEventListener('change',function(e){state.only=e.target.checked;applyFilters();});
+
+
+function score(d,mode){var r=d.r||{};
+  if(mode==='ta')return r.ta?r.ta+Math.min(r.tn,5000)/1e6:0;
+  if(mode==='picks')return (r.pk?r.pk.length:0)+(r.ta||0)/10;
+  return 0;}
+var defaultOrder={};DATA.forEach(function(d,i){defaultOrder[d.id]=i;});
+function applySort(){
+  var mode=state.sort;
+  Array.prototype.forEach.call(document.querySelectorAll('.grid'),function(g){
+    var cs=Array.prototype.slice.call(g.children);
+    cs.sort(function(a,b){var da=cards[a.dataset.id].d,db2=cards[b.dataset.id].d;
+      if(mode==='default')return defaultOrder[da.id]-defaultOrder[db2.id];
+      return score(db2,mode)-score(da,mode)||defaultOrder[da.id]-defaultOrder[db2.id];});
+    cs.forEach(function(c){g.appendChild(c);});
+  });
+}
+$('sort').addEventListener('change',function(e){state.sort=e.target.value;applySort();});
+/* ---- shared state rendering ---- */
+function nameOf(uid){return uid===me.id?'You':(state.names[uid]||'Someone');}
+function fmtDate(ts){try{return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric'});}catch(e){return '';}}
+function updateCard(id){
+  var o=cards[id];if(!o)return;
+  var ps=state.picks[id]||[];var mine=!!me.id&&ps.indexOf(me.id)>=0;
+  o.star.setAttribute('aria-pressed',String(mine));
+  o.star.textContent=(mine?'★ On our list':'☆ Want to eat here')+(ps.length?' ('+ps.length+')':'');
+  o.card.classList.toggle('picked',ps.length>0);
+  if(ps.length){o.who.hidden=false;o.who.textContent='Wanted by '+ps.map(nameOf).join(', ');}else{o.who.hidden=true;}
+  var ns=state.notes[id]||[];o.nb.textContent='Notes ('+ns.length+')';
+  o.list.textContent='';
+  ns.forEach(function(n){
+    var box=el('div','note');var by=el('div','by');
+    by.appendChild(el('span',null,nameOf(n.uid)+(n.ts?' · '+fmtDate(n.ts):'')));
+    if(me.id&&n.uid===me.id&&canWrite){var x=el('button','x','Delete');x.type='button';x.addEventListener('click',function(){delNote(n.docId);});by.appendChild(x);}
+    box.appendChild(by);box.appendChild(el('div',null,n.text));o.list.appendChild(box);
+  });
+  var disabled=!db||!canWrite||!me.id;
+  o.star.disabled=disabled;o.ta.disabled=disabled;o.add.disabled=disabled;
+}
+
+function ids2names(){return state.names;}
+async function api(path,opt){
+  var r=await fetch(path,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opt||{}));
+  if(r.status===401){var e=new Error('auth');e.code='auth';throw e;}
+  if(!r.ok){var e2=new Error('http');e2.code='http';throw e2;}
+  return r.json();
+}
+async function refreshAll(){
+  Object.keys(cards).forEach(updateCard);
+  var n=Object.keys(state.picks).filter(function(k){return state.picks[k].length&&cards[k];}).length;
+  $('tallyN').textContent=String(n);
+  if(state.only)applyFilters();
+}
+function showBanner(t){var b=$('banner');b.textContent=t;b.hidden=!t;}
+async function pull(){
+  try{var s=await api('/api/state');state.picks=s.picks;state.notes=s.notes;state.names=s.names;db=true;await refreshAll();}
+  catch(e){if(e.code==='auth'){signedOut();}}
+}
+async function togglePick(id,btn){
+  if(!db||!me.id)return;btn.disabled=true;
+  try{await api('/api/pick',{method:'POST',body:JSON.stringify({rid:id})});await pull();}catch(e){writeErr(e);}
+  btn.disabled=false;
+}
+async function addNote(id,ta,btn){
+  var text=ta.value.trim();if(!text||!db||!me.id)return;btn.disabled=true;
+  try{await api('/api/note',{method:'POST',body:JSON.stringify({rid:id,text:text.slice(0,600)})});ta.value='';await pull();}catch(e){writeErr(e);}
+  btn.disabled=false;
+}
+async function delNote(docId){
+  try{await api('/api/note/'+encodeURIComponent(docId),{method:'DELETE'});await pull();}catch(e){writeErr(e);}
+}
+function writeErr(e){if(e&&e.code==='auth')signedOut();else showBanner('That did not save. Try again in a moment.');}
+
+/* ---- sign in ---- */
+function signedOut(){me={id:null,name:''};db=null;state.picks={};state.notes={};showBanner('');Object.keys(cards).forEach(updateCard);$('tallyN').textContent='0';$('who').hidden=true;$('signin').hidden=false;}
+function signedIn(m){me={id:m.id,name:m.name};$('signin').hidden=true;$('who').hidden=false;$('whoName').textContent=m.name;}
+$('loginForm').addEventListener('submit',async function(ev){
+  ev.preventDefault();$('loginErr').textContent='';
+  try{var m=await api('/api/login',{method:'POST',body:JSON.stringify({name:$('loginName').value,password:$('loginPw').value})});
+    $('loginPw').value='';signedIn(m);await pull();}
+  catch(e){$('loginErr').textContent=e.code==='auth'?'That password did not match. Ask Dallas for the family password.':'Could not sign in. Try again.';}
+});
+$('signout').addEventListener('click',async function(){try{await api('/api/logout',{method:'POST'});}catch(e){}signedOut();});
+
+/* ---- boot ---- */
+applyFilters();
+(async function boot(){
+  Object.keys(cards).forEach(updateCard);
+  try{var m=await api('/api/me');signedIn(m);await pull();}catch(e){signedOut();}
+  setInterval(function(){if(me.id&&!document.hidden)pull();},6000);
+  document.addEventListener('visibilitychange',function(){if(me.id&&!document.hidden)pull();});
+})();
+})();
+</script>
+</body></html>
